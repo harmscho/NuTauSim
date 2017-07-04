@@ -1,6 +1,13 @@
 # README #
 
 ##################
+# Documentation  #
+##################
+
+The underlying principle of this code, as well as some studies, are documented in https://arxiv.org/abs/1707.00334
+
+
+##################
 # HOW TO COMPILE #
 ##################
 
