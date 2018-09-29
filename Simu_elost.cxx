@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 	double dL=0.;	 	  // Propagation step along chord length. Initialized to zero but it varies for each step.
 	double frac=1e-3;	  // Fraction of energy lost by tau in each step. This value stays constant
 	double dPdes;         // Probability of tau decay in dL
-
+	double traversed_grammage; // Track the grammage traversed upon entering the Earth. 
 	double Energy_GeV;	  // Particle energy 
 	double Bjorken_y;     // Bjorken y value for interactions CC & NC
 
@@ -356,7 +356,8 @@ int main(int argc, char **argv)
 
         brkcnt=0;
         prop_mode =0;
-		
+	traversed_grammage = 0.; //initialize traversed grammage for each event
+	
         //======================= Start propagation along chord of length Lmax
         //printf("Ldist, Lmax %1.2e %1.2e\n", Ldist, Lmax);
 		for(Ldist=0.;Ldist<Lmax;)     
@@ -378,30 +379,33 @@ int main(int argc, char **argv)
 
                 // The following lines use the grammage_distance lookup table to estimate what position along the trajectory this Xint corresponds to.
 
-                // Initialize the interaction length distance to zero.
+		// Add X_int to the total grammage traversed by the particle
+		traversed_grammage += X_int;
+
+                // Initialize the interaction length distance for this step to zero.
                 double Lint = 0.;
 
                 // If too large, make sure it exits the volume.
                 // NOTE: use floats for this condition. Using ints is bad if float > 2^32, then you get negative int.
-                if( X_int/d_grammage + 1. > 1000000.) Lint = 2.*Lmax; // NOTE: 1000000. is the size of the look-up table.
-
+		if( traversed_grammage/d_grammage + 1. > 1000000.){ 
+			Ldist = Lmax; // NOTE: 1000000. is the size of the look-up table.
+			traversed_grammage = sum_grammage;
+		}
                 // If contained within the trajectory, linearly interpolate its interaction distance.
-                if ( floor(X_int/d_grammage) + 1. < 1000000.) // NOTE: 1000000. is the size of the look-up table.
+                if ( floor(traversed_grammage/d_grammage) + 1. < 1000000.) // NOTE: 1000000. is the size of the look-up table.
                 {     
-                    // Get the entry in the look-up table corresponding to X_int
-                    int ii_grammage = int(X_int/d_grammage) + 1;
+                    // Get the entry in the look-up table corresponding to the traversed grammage
+                    int ii_grammage = int(traversed_grammage/d_grammage) + 1;
 
                     // Linearly interpolate to estimate the distance propagated
                     double slope = (grammage_distance[ii_grammage] - grammage_distance[ii_grammage-1])/d_grammage;
                     double intercept = grammage_distance[ii_grammage] - slope*cumulative_grammage[ii_grammage];
-                    Lint = slope*X_int + intercept ;
+		    Lint = slope*traversed_grammage + intercept - Ldist; // keep track of this step's interaction length.
+                    Ldist = slope*traversed_grammage + intercept ;
                 }
 
                 // Save the interaction distance propagated in event structure
                 event.L0[npart]=Lint;
-
-                // Add the interaction distance propagated to the total distance propagated.
-                Ldist+=Lint;   
 
                 // if the neutrino interaction is still inside Earth, simulate an NC or CC interaction and check that particle is still above the tracking energy threshold (Elim) 
                 if(Ldist < Lmax) 
@@ -435,9 +439,12 @@ int main(int argc, char **argv)
                         event.E1[npart]=Energy_GeV;     
                         event.v1[npart]=Ldist; 
 
-                        // Change the particle tage from tau neutrino to lepton.
+                        // Change the particle tag from tau neutrino to lepton.
                         event.id[npart]=1;   	    
                         tag=1;
+                        
+                        // get the density at the current location before jumping to the tau lepton part of the loop
+                        dens = earthdens(&Ldist,&Lmax);
                     }
                     else
                     {
@@ -494,6 +501,9 @@ int main(int argc, char **argv)
 
                 // Check if tau leaves the Earth after dL. If it does then adjust last step
                 if(Ldist+dL > Lmax) dL=Lmax-Ldist;
+
+		// Calculate the traversed grammage
+                traversed_grammage+=dL*dens;
 
                 // Calculate the probability that the tau lepton will decay along the step dL. 
                 dPdes=1.-exp(-dL*dPdesdx(Energy_GeV));   
@@ -773,9 +783,8 @@ double dsigNC(double E, int CCmode)
 double dPdesdx(double E)
 {
 	double f;
-	double p=sqrt(E*E-m2);
 
-	f=1./(p*taudl/m);
+	f=m/(E*taudl);
 
 	return f;
 }
