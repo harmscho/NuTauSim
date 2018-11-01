@@ -4,7 +4,12 @@
 # Documentation  #
 ##################
 
-The underlying principle of this code, as well as some studies, are documented in https://arxiv.org/abs/1707.00334
+The underlying principle of this code, as well as some studies, are documented in https://arxiv.org/abs/1707.00334  and https://journals.aps.org/prd/abstract/10.1103/PhysRevD.97.023021 . If you used this code for a publication, please cite the corresponding paper https://journals.aps.org/prd/abstract/10.1103/PhysRevD.97.023021 . 
+
+If you want to contribute to this project, please use the forking workflow as explained in:
+
+https://www.atlassian.com/git/tutorials/comparing-workflows/forking-workflow
+
 
 
 ##################
