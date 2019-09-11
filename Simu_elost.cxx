@@ -112,7 +112,7 @@ int main(int argc, char **argv)
   // ARGUMENTS:
   // argv[1]:   energy in eV (e.g. 1.e20)
   // argv[2]:   angle (e.g. 91.7) NOTE: This is 180 - exit_angle
-  // argv[3]:   number of events (e.g. 1e3)
+  // argv[3]:   (optional) number of events (default:  1e7)
   
   // argv[4]:  (optional) cross-section mode (default: 0 middle, other options: 1 lower, 2 upper.)
   // argv[5]:  (optional) Eloss mode (default: 0 ALLM, other options: 1 ASW)
@@ -262,6 +262,10 @@ int main(int argc, char **argv)
   if(argc>6){
     terra->depth_new_layer = atof(argv[6]);
     terra->dens_new_layer = atof(argv[7]);
+    if (terra->dens_new_layer <= 0 || terra->depth_new_layer < 0) {
+      cerr << "ERROR: user specified layer most have densitiy >0 and depth >= 0" << endl;
+      return -1;
+    }
     cout << "Outer Layer Thickness " << terra->depth_new_layer   << " km" << endl;
     cout << "Outer Layer Density   " << terra->dens_new_layer    << " g/cm^3" << endl;
   }
