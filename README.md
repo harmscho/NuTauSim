@@ -43,7 +43,7 @@ Example:
 
 This injects tau neutrinos with energy 10^20 eV at a zenith angle of 91 degrees (incidence angle 89 degrees, exit angle 89 degrees, emergence angle 1 degree). 100 (1e2) instances of injected tau neutrinos are simulated. The cross-section model is the middle (a.k.a. standard) curve (0) and the tau energy loss rate model is ALLM (0). The water layer thickness is 4.0 km with density 0.92 g/cm^3 (ice). The output files have tag "test_tmp" on the and they will be written to the local directory ./
 
-One can give the energy a value of 0, in this case tau-energies are generated (rabdomly) uniformly in log-space in the range E=1e15 eV and E=1e21. The tau-neutrino energies are stored as the last column in the output file. 
+One can give the energy a value of 0, in this case tau-energies are generated (randomly) uniformly in log-space in the range E=1e15 eV and E=1e21. The tau-neutrino energies are stored as the last column in the output file. 
  
 Step 2
 ----------
