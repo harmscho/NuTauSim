@@ -84,4 +84,13 @@ const double pNC7=-5.11796e-35;
 const double pNC8=2.12964e-36;   
 const double pNC9=-3.68115e-38;   
 
+// Parameterization values for tau eloss pair production and bremsstrahlung
+// There are 3 layer compositions (iron, rock, water) and 4 parameters for the fit
+const double pBrem[3][4] = {{1.56995122e-08, 4.28188407e+00, 2.94450001e+00, 6.98412618e-01}, 
+			    {7.88982596e-09, 4.48475227e+00, 3.08880391e+00, 6.09300006e-01}, 
+                            {6.21177609e-09, 4.64573538e+00, 3.21763680e+00, 4.94713279e-01}
+                            };
+const double pPair[3][4] = {{2.81202672e-07, 5.42597316e+00, 5.79540809e+00, 3.57248989e-02}, 
+                            {1.34819038e-07, 1.60062940e+00, 1.52179335e+00, 8.98529667e+00}, 
+                            {9.26738275e-08, 1.70211443e+00, 1.57079809e+00, 7.81591550e+00}};
 

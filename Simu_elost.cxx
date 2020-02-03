@@ -41,10 +41,10 @@ using namespace std;
 
 // -------------------------------------------------
 // For tau lepton energy loss: dE/dX = -alpha + beta(E)*E 
-double funcalph(double *x, double *par);
+double funcalph(double *x, int *par);
 double delta(double X);
 // Parameterisations for beta 
-double beta9fit(double *x, double *par, int ELOSSmode);	
+double beta9fit(double *x, int *par, int ELOSSmode);	
 // Elost by tau dE/dX in GeV/(g/cm^2)
 double elost(double E, double dens, int ELOSSmode);
 
@@ -503,6 +503,8 @@ int main(int argc, char **argv)
       // Estimate step length based on Energy, dE/dx, local density, and fraction.
       dL=(Energy_GeV/(dens*elost(Energy_GeV, dens, ELOSSmode)))*frac;
       
+      //cout << "Ldist " << 1.e-5*Ldist << "  R " << 1.e-5*sqrt(R02 - (Ldist*Lmax)+Ldist*Ldist) << " dens " << dens << endl;
+
       // Check if tau leaves the Earth after dL. If it does then adjust last step
       if(Ldist+dL > Lmax) dL=Lmax-Ldist;
       
@@ -801,24 +803,28 @@ double elost(double E, double dens, int ELOSSmode)
   double f;
   
   //  dE/dX =      E*beta(E)      +     alpha(E)
-  double z = 0.;
   
-  // this is a super-kludgy way to account for beta being different for surface rock <A>=22, <Z>=11 and water <A>=11.9, <Z>=6.6
-  // material properties are not tracked in this simulation but densities are!.
-  double factor=1.;
-  
+  // this is a super-kludgy way to account for beta being different for iron <A>=56.84, <Z>=26; rock <A>=22, <Z>=11; and water <A>=11.9, <Z>=6.6
+  // material properties are not tracked in this simulation but densities are.
+
+  int lyr = 0; // initialize to iron
+  if (dens < 7.75) lyr = 1; // density jump between outer core and mantle
+  if (dens < 2.0) lyr = 2;  // density jump between rock and water 
+
   // The correction below was based on the claim that the photonuclear energy loss is proportional to <A> as well as the density in Palomares-Ruiz, Irimia, & Weiler, Phys. Rev. D, 73, 083003 (2006)
   // Searching through the references, this claim is demonstrably false. See S. I. Dutta, M. H. Reno, I. Sarcevic, and D. Seckel, Phys. Rev. D 63, 094020 (2001).
   // Earlier runs of the code used the line below but it has been commented out.
   // if(dens<1.1) factor = 0.55; // This kluge corrects for the change of <A>=22 in rocks vs <A>=12 of H2O
   //printf("factor %1.2f \n", factor);
   
-  f = E * factor * beta9fit(&E,&z,ELOSSmode) + funcalph(&E, &z);
+  f = E * beta9fit(&E,&lyr,ELOSSmode) + funcalph(&E, &lyr);
   //f = E*(emlost->Eval(E)) + funca->Eval(E);
+  // cout << "\tE " << E << endl;
+  //cout << "\tlyr " << lyr << " dens = " << dens << endl;
   // cout << " f = " << f << endl;
-  // cout << " E * beta9fit(&E,&z) + funcalph(&E, &z); " << E * beta9fit(&E,&z) + funcalph(&E, &z) << endl << endl;
-  // cout << " funcalph(&E,&z) " << E << " " << z << " " << funcalph(&E, &z) << endl << endl;
-  //cout << " beta9fit(&E,&z) " << E << " " << beta9fit(&E,&z,0) << " " << beta9fit(&E,&z,1) << endl << endl;
+  // cout << " E * beta9fit(&E,&lyr) + funcalph(&E, &lyr); " << E * beta9fit(&E,&lyr) + funcalph(&E, &lyr) << endl << endl;
+  // cout << " funcalph(&E,&lyr) " << E << " " << lyr << " " << funcalph(&E, &zlyr << endl << endl;
+  //cout << " beta9fit(&E,&lyr) " << E << " " << beta9fit(&E,&lyr,0) << " " << beta9fit(&E,&lyr,1) << endl << endl;
   
   
   return f;
@@ -826,7 +832,7 @@ double elost(double E, double dens, int ELOSSmode)
 
 // ###################################################
 // ###################################################
-double funcalph(double *x, double *par)
+double funcalph(double *x, int *par)
 // double funcalph(double *x)
 {
   double f;
@@ -836,9 +842,11 @@ double funcalph(double *x, double *par)
   double gamma=x[0]/m;
   double EE=Cbb2*p*p/(me2+m2+Cbb2*x[0]);
   double X=log10(b*gamma);
-  
+  double factor[3] = {0.9304, 1.0, 1.1092}; // ratio Z/A for iron, rock, and water divided by Z/A=0.5 for rock 
+ 
   f=Cbb1/(b2)*(log(Cbb2*b2*gamma*gamma/I2)-2*b2+EE*EE/(4*x[0]*x[0])-delta(X));
-  
+  f *= factor[par[0]];
+  //cout << "\tlyr " << par[0] << " factor " << factor[par[0]] << " val " << f << endl; 
   return f;
 }
 
@@ -865,9 +873,9 @@ double delta(double X)
 // ###################################################
 //mac double beta9fit(double *x, double *par)
 //double beta9fit(double *x)
-double beta9fit(double *x, double *par, int ELOSSmode)
+double beta9fit(double *x, int *par, int ELOSSmode)
 {
-  double f=0.;
+  //double f=0.;
   double b0 = 0.;
   double b1 = 0.;
   double b2 = 0.;
@@ -875,9 +883,12 @@ double beta9fit(double *x, double *par, int ELOSSmode)
   /* ALLM */
   if(ELOSSmode==0)
   {
-  b0 = 2.05820774222e-07;
-  b1 = 4.93367455295e-09;
-  b2 = 0.227781737887;
+  //b0 = 2.05820774222e-07;
+  //b1 = 4.93367455295e-09;
+  //b2 = 0.227781737887;
+  b0 = -7.78527765e+00;
+  b1 = -2.80672147e-02;  
+  b2 = 6.38891661e-03;
   //printf("ALLM \n");
   }
   /* CKMT */
@@ -904,12 +915,25 @@ double beta9fit(double *x, double *par, int ELOSSmode)
   b0=-4.77043758142e-08;
   b1=1.9031520827e-07;
   b2=0.0469916563971;
+  b0 = -8.61998129e+00;
+  b1 =  1.57820040e-01; 
+  b2 = -2.24340096e-03;
   //printf("ASW \n");
   }
-  f=b0+b1*pow(x[0],b2);
+  double log10E = log10(x[0]);
+  double f_phot = pow(10., b0 + b1*(log10E+9.) + b2*(log10E+9.)*(log10E+9.));
+  //f=b0+b1*pow(x[0],b2);
   //printf("%1.2e \n", f);
-  
-  return f;
+ 
+  double f_brem = pBrem[par[0]][0]*pow(1.-exp(-pow((log10E)/pBrem[par[0]][1], pBrem[par[0]][2])),pBrem[par[0]][3]);
+  double f_pair = pPair[par[0]][0]*pow(1.-exp(-pow((log10E)/pPair[par[0]][1], pPair[par[0]][2])),pPair[par[0]][3]);
+
+  // cout << "\tpar[0] " << par[0] << endl;
+  // cout << "\tBrem " << pBrem[par[0]][0] << " " <<  pBrem[par[0]][1] << " " <<  pBrem[par[0]][2] << " " <<  pBrem[par[0]][3] << endl;
+  // cout << "\tPair " << pPair[par[0]][0] << " " <<  pPair[par[0]][1] << " " <<  pPair[par[0]][2] << " " <<  pPair[par[0]][3] << endl;
+  // cout << "\ttest " << 1.-exp(pow(log10(x[0])/pBrem[par[0]][1], pBrem[par[0]][2])) << endl;
+  // cout << "\tpair, brem, photoN " << f_pair << " " << f_brem << " " << f_phot << endl;
+  return f_pair + f_brem + f_phot;
 }
 
 // #######################################################
